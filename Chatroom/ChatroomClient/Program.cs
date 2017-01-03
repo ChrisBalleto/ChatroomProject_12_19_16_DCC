@@ -6,14 +6,14 @@ using System.Text;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace Chatroom
+namespace ChatroomClient
 {
     class Program
     {
         static void Main(string[] args)
         {
-            Server newServer = new Server();
-            newServer.StartUp();
+            Client newClient = new Client();
+            newClient.StartUp(newClient);
 
             Console.ReadLine();
         }
