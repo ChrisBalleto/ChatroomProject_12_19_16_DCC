@@ -6,24 +6,23 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.ComponentModel;
+using System.Collections.Specialized;
 
 namespace Chatroom 
 {
     class Server
     {
-        Dictionary<int, ServerClient> chatroomMembers = new Dictionary<int, ServerClient>();
+        IDictionary<int, ServerClient> chatroomMembers = new Dictionary<int, ServerClient>();
         Queue<string> messageQueue = new Queue<string>();
         Logger chatlog = new Logger();
         TcpListener serverListen;
         IPAddress ipAddress;
-        NetworkStream stream;
         TcpClient newClient;
-        ServerClient newServerClient;
         int port;
         string data;
         Byte[] bytes;
         int userCount = 0;
-
         public Server()
         {
         }
@@ -75,31 +74,30 @@ namespace Chatroom
             {
                 MakeBuffer();
                 newClient = serverListen.AcceptTcpClient();
-                stream = newClient.GetStream();
-                newServerClient = new ServerClient();
+                NetworkStream stream = newClient.GetStream();
+                ServerClient newServerClient = new ServerClient(stream);
                 AddUserData(newServerClient);             
-                Task.Run(() => RecieveMessageLoop());
+                Task.Run(() => RecieveMessageLoop(newServerClient));
                 Task.Run(() => SendMessageLoop());
                 Task.Run(() => SendMessageToUsers());
             }                   
         }
-
         public void MakeBuffer()
         {
             bytes = new Byte[256];
             data = null;
         }        
-        public void RecieveMessageLoop()
+        public void RecieveMessageLoop(ServerClient newServerClient)
         {
             while(true)
             {              
                 Byte[] data = new Byte[256];
-                stream.Read(data, 0, data.Length);
+                newServerClient.clientNetStream.Read(data, 0, data.Length);
                 string responseData = Encoding.ASCII.GetString(data);
                 string toQueue = newServerClient.Username.Trim('\0') + ":" + responseData.Trim('\0');
                 messageQueue.Enqueue(toQueue);
             }
-            stream.Close();
+            newServerClient.clientNetStream.Close();
             newClient.Close();
         }
         public void SendMessageToUsers()
@@ -117,12 +115,19 @@ namespace Chatroom
             {
                 if (messageQueue.Count != 0)
                 {
+                    //string message = messageQueue.Dequeue().Trim('\0');
+                    //Byte[] data = new Byte[256];
+                    //data = Encoding.ASCII.GetBytes(message);
+                    //stream.Write(data, 0, data.Length);
                     string message = messageQueue.Dequeue().Trim('\0');
-                    Byte[] data = new Byte[256];
-                    data = Encoding.ASCII.GetBytes(message);
-                    stream.Write(data, 0, data.Length);
                     Console.WriteLine(message.Trim('\0'));
                     chatlog.WriteToFile(message.Trim('\0'));
+                    foreach (ServerClient client in chatroomMembers.Values)
+                    {
+                        Byte[] data = new Byte[256];
+                        data = Encoding.ASCII.GetBytes(message);
+                        client.clientNetStream.Write(data, 0, data.Length);
+                    }                    
                 }
             }
         }
@@ -130,7 +135,7 @@ namespace Chatroom
         {
             userCount++;
             Byte[] data = new Byte[256];
-            stream.Read(data, 0, data.Length);
+            newServerClient.clientNetStream.Read(data, 0, data.Length);
             string responseData = Encoding.ASCII.GetString(data).Trim('\0');
             newServerClient.Username = responseData;
             string trimmed = newServerClient.Username.Trim('\0');
@@ -138,7 +143,5 @@ namespace Chatroom
             messageQueue.Enqueue(connected.Trim('\0'));
             chatroomMembers.Add(userCount, newServerClient);            
         }
-
-
     }
 }

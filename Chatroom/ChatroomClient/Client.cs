@@ -16,7 +16,6 @@ namespace ChatroomClient
         string message;
         string username;
         NetworkStream stream;
-
         public void StartUp(Client client)
         {
             SetIpAddress();
@@ -60,11 +59,9 @@ namespace ChatroomClient
             }
             stream.Close();
             newTcpClient.Close();
-        }
-    
+        }    
         public void StartSendLoop()
         {
-            //SendUsername();
             while (true)
             {
                 Byte[] data = new Byte[256];
@@ -79,7 +76,5 @@ namespace ChatroomClient
             data = Encoding.ASCII.GetBytes(username);
             stream.Write(data, 0, data.Length);
         }
-
-
     }
 }

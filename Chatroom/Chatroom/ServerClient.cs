@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+using System.Net.Sockets;
 
 namespace Chatroom
 {
     class ServerClient
     {
+        public NetworkStream clientNetStream;
         string username;
-
-        public ServerClient()
+        public ServerClient(NetworkStream stream)
         {
-            
+            clientNetStream = stream;
         }
         public ServerClient(string name)
         {
@@ -29,6 +31,5 @@ namespace Chatroom
                 username = value;
             }
         }
-
     }
 }
