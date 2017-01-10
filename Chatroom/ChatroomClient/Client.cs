@@ -15,19 +15,16 @@ namespace ChatroomClient
         TcpClient newTcpClient;
         string message;
         string username;
-        Byte[] data;
-        String responseData;
         NetworkStream stream;
-
-
-
 
         public void StartUp(Client client)
         {
             SetIpAddress();
             SetPort();
+            SetUsername();
             ConnectToServer();
-            StartChatLoop();   
+            SendUsername();
+            Parallel.Invoke(StartRecieveLoop, StartSendLoop);
         }
         public void SetIpAddress()
         {
@@ -42,30 +39,47 @@ namespace ChatroomClient
         }
         public void ConnectToServer()
         {
-            newTcpClient = new TcpClient();
-            newTcpClient.Connect(ipAddress, port);  //change to (ipAddress,port) when project is completed
+            newTcpClient = new TcpClient();            
+            newTcpClient.Connect(ipAddress, port); 
             Console.WriteLine("Connection Made.\n\r");
-            Console.Write("Type Message\n\r");
+            stream = newTcpClient.GetStream();
         }
-        public void StartChatLoop()
+        public void SetUsername()
         {
-            bool isChatting = true;
-            while(isChatting == true)
+            Console.WriteLine("What is your username?");
+            username = Console.ReadLine();
+        }
+        public void StartRecieveLoop()
+        {
+            while (true)
             {
-                string message = Console.ReadLine();               
-                data = System.Text.Encoding.ASCII.GetBytes(message);
-                stream = newTcpClient.GetStream();
-                stream.Write(data, 0, data.Length);              
-                Console.WriteLine("Sent: {0}", message);
-                data = new Byte[10025];
-                responseData = String.Empty;
-                int bytes = stream.Read(data, 0, data.Length);
-                responseData = Encoding.ASCII.GetString(data, 0, bytes);
-                Console.WriteLine("Recieved: {0}", responseData);
+                Byte[] data = new Byte[256];          
+                stream.Read(data, 0, data.Length);
+                string responseData = Encoding.ASCII.GetString(data);
+                Console.WriteLine(responseData.Trim('\0'));
             }
             stream.Close();
             newTcpClient.Close();
         }
+    
+        public void StartSendLoop()
+        {
+            //SendUsername();
+            while (true)
+            {
+                Byte[] data = new Byte[256];
+                message = Console.ReadLine();
+                data = System.Text.Encoding.ASCII.GetBytes(message);
+                stream.Write(data, 0, data.Length);
+            }
+        }
+        public void SendUsername()
+        {
+            Byte[] data = new Byte[256];
+            data = Encoding.ASCII.GetBytes(username);
+            stream.Write(data, 0, data.Length);
+        }
+
 
     }
 }
