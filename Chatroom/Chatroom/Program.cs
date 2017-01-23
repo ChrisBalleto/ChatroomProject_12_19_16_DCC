@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Net;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace Chatroom
 {
@@ -12,7 +13,8 @@ namespace Chatroom
     {
         static void Main(string[] args)
         {
-            Server newServer = new Server();
+            ILogger text = new Text();
+            Server newServer = new Server(text);
             newServer.StartUp();
 
             Console.ReadLine();

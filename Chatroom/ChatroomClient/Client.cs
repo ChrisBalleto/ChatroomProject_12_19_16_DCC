@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
 
-namespace ChatroomClient
+namespace ChatroomClient 
 {
     class Client
     {
@@ -28,12 +28,12 @@ namespace ChatroomClient
         public void SetIpAddress()
         {
             Console.WriteLine("...Welcome to B-Chat!...");
-            Console.WriteLine("What is your IP Address?\n\r");
+            Console.WriteLine("What is the Server's IP Address?\n\r");
             ipAddress = IPAddress.Parse(Console.ReadLine());
         }
         public void SetPort()
         {
-            Console.WriteLine("What is your Port Number?\n\r");
+            Console.WriteLine("What Port is the Server using?\n\r");
             port = int.Parse(Console.ReadLine());
         }
         public void ConnectToServer()
@@ -57,8 +57,7 @@ namespace ChatroomClient
                 string responseData = Encoding.ASCII.GetString(data);
                 Console.WriteLine(responseData.Trim('\0'));
             }
-            stream.Close();
-            newTcpClient.Close();
+
         }    
         public void StartSendLoop()
         {

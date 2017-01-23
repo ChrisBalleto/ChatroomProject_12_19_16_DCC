@@ -3,17 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net.Sockets;
 using System.IO;
 
 namespace Chatroom
 {
-    class Logger
+    class Text : ILogger
     {
-        
-        public void WriteToFile(string data, StreamWriter writer)
+        StreamWriter writer = new StreamWriter("chatlog.txt", true);
+        public void WriteToFile(string data)
         {
             writer.WriteLine(data);
-            writer.Flush();         
+            writer.Flush();
         }
     }
 }

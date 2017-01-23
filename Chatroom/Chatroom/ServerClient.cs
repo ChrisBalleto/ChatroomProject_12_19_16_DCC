@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Net.Sockets;
 
-namespace Chatroom
+namespace Chatroom 
 {
-    class ServerClient
+    class ServerClient : ISubscriber
     {
         public NetworkStream clientNetStream;
         string username;
@@ -30,6 +30,11 @@ namespace Chatroom
             {
                 username = value;
             }
+        }
+
+        public void Notify(string username)
+        {
+            Console.Write("{0} has joined the chat.", username);
         }
     }
 }

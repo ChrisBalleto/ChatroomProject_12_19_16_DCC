@@ -11,20 +11,23 @@ using System.Collections.Specialized;
 
 namespace Chatroom 
 {
-    class Server
+    class Server : ISubscriber
     {
-        IDictionary<int, ServerClient> chatroomMembers = new Dictionary<int, ServerClient>();
+        
+        Dictionary<int, ServerClient> chatroomMembers = new Dictionary<int, ServerClient>();
         Queue<string> messageQueue = new Queue<string>();
-        Logger chatlog = new Logger();
+        ILogger logger;
         TcpListener serverListen;
         IPAddress ipAddress;
         TcpClient newClient;
+        //StreamWriter sWriter;
+        string serverUsername;
         int port;
-        string data;
         Byte[] bytes;
         int userCount = 0;
-        public Server()
+        public Server(ILogger logger)
         {
+            this.logger = logger;
         }
         public IPAddress IpAddress
         {
@@ -52,6 +55,7 @@ namespace Chatroom
         {
             SetIpAddress();
             SetPort();
+            SetServerName();
             StartListening();           
         }
         public void SetIpAddress()
@@ -72,21 +76,21 @@ namespace Chatroom
             serverListen.Start();
             while (true)
             {
-                MakeBuffer();
+                bytes = new Byte[256];
                 newClient = serverListen.AcceptTcpClient();
                 NetworkStream stream = newClient.GetStream();
                 ServerClient newServerClient = new ServerClient(stream);
                 AddUserData(newServerClient);             
                 Task.Run(() => RecieveMessageLoop(newServerClient));
                 Task.Run(() => SendMessageLoop());
-                Task.Run(() => SendMessageToUsers());
+                Task.Run(() => SendMessageToQueue());
             }                   
         }
-        public void MakeBuffer()
+        public void SetServerName()
         {
-            bytes = new Byte[256];
-            data = null;
-        }        
+            Console.WriteLine("What is your username Server?");
+            serverUsername = Console.ReadLine();          
+        }       
         public void RecieveMessageLoop(ServerClient newServerClient)
         {
             while(true)
@@ -94,19 +98,16 @@ namespace Chatroom
                 Byte[] data = new Byte[256];
                 newServerClient.clientNetStream.Read(data, 0, data.Length);
                 string responseData = Encoding.ASCII.GetString(data);
-                string toQueue = newServerClient.Username.Trim('\0') + ":" + responseData.Trim('\0');
+                string toQueue = newServerClient.Username.Trim('\0') + ": " + responseData.Trim('\0');
                 messageQueue.Enqueue(toQueue);
             }
-            newServerClient.clientNetStream.Close();
-            newClient.Close();
         }
-        public void SendMessageToUsers()
+        public void SendMessageToQueue()
         {
             while (true)
             {
-                string message = "Server:" + Console.ReadLine();
+                string message = serverUsername + ": " + Console.ReadLine();
                 messageQueue.Enqueue(message);
-                //Console.WriteLine("Server: {0}", message.Trim('\0'));
             }
         }
          public void SendMessageLoop()
@@ -115,21 +116,21 @@ namespace Chatroom
             {
                 if (messageQueue.Count != 0)
                 {
-                    //string message = messageQueue.Dequeue().Trim('\0');
-                    //Byte[] data = new Byte[256];
-                    //data = Encoding.ASCII.GetBytes(message);
-                    //stream.Write(data, 0, data.Length);
-                    string message = messageQueue.Dequeue().Trim('\0');
-                    Console.WriteLine(message.Trim('\0'));
-                    chatlog.WriteToFile(message.Trim('\0'));
+                    string message = messageQueue.Dequeue().Trim('\0');                   
+                    logger.WriteToFile(message.Trim('\0'));
                     foreach (ServerClient client in chatroomMembers.Values)
                     {
                         Byte[] data = new Byte[256];
                         data = Encoding.ASCII.GetBytes(message);
                         client.clientNetStream.Write(data, 0, data.Length);
-                    }                    
+                    }
+                    PrintToServerConsole(message);
                 }
             }
+        }
+        public void PrintToServerConsole(string message)
+        {
+            Console.WriteLine(message.Trim('\0'));
         }
         public void AddUserData(ServerClient newServerClient)
         {
@@ -138,10 +139,24 @@ namespace Chatroom
             newServerClient.clientNetStream.Read(data, 0, data.Length);
             string responseData = Encoding.ASCII.GetString(data).Trim('\0');
             newServerClient.Username = responseData;
+            //NotifyAll(newServerClient.Username.Trim('\0'));
             string trimmed = newServerClient.Username.Trim('\0');
             string connected = newServerClient.Username.Trim('\0') + " has connected.";
             messageQueue.Enqueue(connected.Trim('\0'));
             chatroomMembers.Add(userCount, newServerClient);            
+        }
+
+        public void NotifyAll(string name)
+        {
+            foreach(ServerClient client in chatroomMembers.Values)
+            {
+                client.Notify(name);
+            }
+
+        }
+        public void Notify(string name)
+        {
+            Console.Write("{0} has joined the chat.", name);
         }
     }
 }
