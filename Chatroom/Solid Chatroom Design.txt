@@ -1,0 +1,14 @@
+In my TCP Chatroom the design principles that I have implemented are Single Responsibility Principle, and Open/Closed Principle.  
+
+
+I used single responsibility by breaking down the different steps of setting up the client and servers. 
+Most of the examples I saw did 
+everything within the program class in one function....
+I wasn't able to get far enough along where I understood the tcpclient class to
+ break it down further. I did break down in the server and client classes functions such as SetPort,
+SetIPAddress, StartListening, 
+MakeBuffer, StartLoop. I also used this principle in my server class for breaking down the different functions of the server threads.
+
+I also used the Open/Closed principle when I set the IP address in both the client and server class. I am able to change out that function
+ to set the ip address if needed. Rather than
+setting the IP address in another method.
