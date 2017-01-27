@@ -74,6 +74,7 @@ namespace Chatroom
             Console.WriteLine("Server Listening...\n\r");
             serverListen = new TcpListener(IPAddress.Any, port);
             serverListen.Start();
+            Task.Run(() => SendMessageLoop());
             while (true)
             {
                 bytes = new Byte[256];
@@ -82,7 +83,6 @@ namespace Chatroom
                 ServerClient newServerClient = new ServerClient(stream);
                 AddUserData(newServerClient);             
                 Task.Run(() => RecieveMessageLoop(newServerClient));
-                Task.Run(() => SendMessageLoop());
                 Task.Run(() => SendMessageToQueue());
             }                   
         }
